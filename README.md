@@ -1,0 +1,2 @@
+# aliyun_ddns_util_php
+基于阿里云解析API开发的PHP版动态解析DDNS实用工具
