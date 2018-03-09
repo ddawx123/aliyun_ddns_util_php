@@ -18,11 +18,20 @@ $subhostname = "www"; //提供子域名
 //否则您可能需要修改application.class.php实现自定义格式
 $public_ip_fetcher = 'http://115.159.116.240/getip.php';
 
+//用于检测目标域名的IP地址
+//如相同则跳过更新进程直接抛出提示
+$dns_current_ipaddr_text = gethostbyname($subhostname.'.'.$rootdomain);
+$srv_current_ipaddr_json = file_get_contents($public_ip_fetcher);
+$srv_current_ipaddr_json = json_decode($srv_current_ipaddr_json);
+if ($srv_current_ipaddr_json->client_ip == $dns_current_ipaddr_text) {
+    exit('{"result":"Skip the DNS update process, because the same IP has been found","code":200}');
+}
+
 //获取阿里云DNS实例
 $alibaba_dns = AliDDNS::getInstance($accessKey, $secretKey, $rootdomain, $subhostname, $public_ip_fetcher);
 //绑定 ip 到域名
 $rid = $alibaba_dns->DescribeDomainRecords();
 if ($rid == null) {
-    $alibaba_dns->outPut('{"result":"error","code":500}');
+    $alibaba_dns->outPut('{"result":"Could not found your domain: '.$subhostname.'.'.$rootdomain.'\'s record on alibaba-cloud api response list. If it does not exist, please add this record and try again.","code":500}');
 }
 $alibaba_dns->UpdateDomainRecord($rid);
